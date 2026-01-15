@@ -151,7 +151,7 @@ final class AppState: ObservableObject {
 
     // MARK: - Credentials Management
 
-    func saveCredentials(clientId: String, clientSecret: String) throws {
+    func saveCredentials(clientId: String, clientSecret: String) async throws {
         let credentials = APICredentials(clientId: clientId, clientSecret: clientSecret)
         try keychainService.saveCredentials(credentials)
 
@@ -159,7 +159,14 @@ final class AppState: ObservableObject {
         authService = nil
         apiService = nil
         setupServices()
-        startPeriodicRefresh()
+
+        // Intentar obtener token y datos inmediatamente para validar credenciales
+        await refreshData()
+
+        // Si no hubo error, iniciar refresh periódico
+        if lastError == nil {
+            startPeriodicRefresh()
+        }
     }
 
     func clearCredentials() {

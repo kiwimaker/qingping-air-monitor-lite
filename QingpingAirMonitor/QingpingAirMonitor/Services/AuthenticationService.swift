@@ -28,14 +28,20 @@ actor AuthenticationService {
 
     private func refreshToken() async throws -> String {
         guard let credentials = keychainService.getCredentials() else {
+            print("[Auth] No credentials found")
             throw AuthError.noCredentials
         }
+
+        print("[Auth] Got credentials - clientId: \(credentials.clientId.prefix(5))...")
 
         let credentialString = "\(credentials.clientId):\(credentials.clientSecret)"
         guard let credentialData = credentialString.data(using: .utf8) else {
             throw AuthError.encodingError
         }
         let base64Credentials = credentialData.base64EncodedString()
+
+        print("[Auth] Base64: \(base64Credentials.prefix(20))...")
+        print("[Auth] Requesting token from: \(tokenURL)")
 
         var request = URLRequest(url: tokenURL)
         request.httpMethod = "POST"
@@ -45,10 +51,18 @@ actor AuthenticationService {
         let bodyParams = "grant_type=client_credentials&scope=device_full_access"
         request.httpBody = bodyParams.data(using: .utf8)
 
+        print("[Auth] Sending request...")
         let (data, response) = try await URLSession.shared.data(for: request)
+        print("[Auth] Got response")
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            print("[Auth] Invalid response type")
             throw AuthError.invalidResponse
+        }
+
+        print("[Auth] Status code: \(httpResponse.statusCode)")
+        if let responseBody = String(data: data, encoding: .utf8) {
+            print("[Auth] Response body: \(responseBody)")
         }
 
         guard httpResponse.statusCode == 200 else {
@@ -59,6 +73,7 @@ actor AuthenticationService {
         }
 
         let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
+        print("[Auth] Token obtained successfully!")
 
         cachedToken = tokenResponse.accessToken
         tokenExpiration = Date().addingTimeInterval(TimeInterval(tokenResponse.expiresIn - 60))

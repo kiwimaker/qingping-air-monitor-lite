@@ -8,7 +8,7 @@ actor QingpingAPIService {
         self.authService = authService
     }
 
-    func fetchDevicesWithData() async throws -> [DeviceWithData] {
+    func fetchDevicesWithData(retryOnUnauthorized: Bool = true) async throws -> [DeviceWithData] {
         let token = try await authService.getValidToken()
         let timestamp = Int(Date().timeIntervalSince1970)
 
@@ -25,6 +25,13 @@ actor QingpingAPIService {
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
+        }
+
+        // Si recibimos 401, limpiamos el token y reintentamos una vez
+        if httpResponse.statusCode == 401 && retryOnUnauthorized {
+            print("[API] Token expirado, renovando...")
+            await authService.clearCache()
+            return try await fetchDevicesWithData(retryOnUnauthorized: false)
         }
 
         guard httpResponse.statusCode == 200 else {

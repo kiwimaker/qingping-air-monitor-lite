@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var alertTitle = ""
     @State private var alertMessage = ""
     @State private var hasExistingCredentials = false
+    @State private var isSaving = false
 
     var body: some View {
         TabView {
@@ -78,11 +79,19 @@ struct SettingsView: View {
                     }
                     .disabled(!hasExistingCredentials)
 
-                    Button("Guardar") {
+                    Button {
                         saveCredentials()
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                                .frame(width: 60)
+                        } else {
+                            Text("Guardar")
+                        }
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(clientId.isEmpty || clientSecret.isEmpty)
+                    .disabled(clientId.isEmpty || clientSecret.isEmpty || isSaving)
                 }
             }
         }
@@ -198,15 +207,26 @@ struct SettingsView: View {
             return
         }
 
-        do {
-            try appState.saveCredentials(clientId: clientId, clientSecret: secretToSave)
-            hasExistingCredentials = true
-            alertTitle = "Guardado"
-            alertMessage = "Credenciales guardadas correctamente"
-            showingAlert = true
-        } catch {
-            alertTitle = "Error"
-            alertMessage = "Error al guardar: \(error.localizedDescription)"
+        isSaving = true
+
+        Task {
+            do {
+                try await appState.saveCredentials(clientId: clientId, clientSecret: secretToSave)
+                hasExistingCredentials = true
+
+                if appState.lastError == nil {
+                    alertTitle = "Conectado"
+                    alertMessage = "Credenciales válidas. Datos obtenidos correctamente."
+                } else {
+                    alertTitle = "Guardado con errores"
+                    alertMessage = "Credenciales guardadas pero hubo un error: \(appState.lastError ?? "")"
+                }
+            } catch {
+                alertTitle = "Error"
+                alertMessage = "Error al guardar: \(error.localizedDescription)"
+            }
+
+            isSaving = false
             showingAlert = true
         }
     }
