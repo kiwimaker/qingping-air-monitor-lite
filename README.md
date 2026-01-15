@@ -68,14 +68,25 @@ open QingpingAirMonitor/QingpingAirMonitor.xcodeproj
 
 ## Configuration
 
-### 1. Get API Credentials
+### 1. Set Up Your Qingping Account
+
+Before getting API credentials, you need a Qingping account with your device linked:
+
+1. Download the [Qingping IoT app](https://apps.apple.com/app/qingping-iot/id1447513201) on your phone
+2. Create an account using your **phone number** or **email**
+3. Follow the app instructions to **pair your Air Monitor Lite** device
+4. Keep your login credentials — you'll need the same phone/email for the developer portal
+
+> **Important:** You must use the same phone number or email associated with your Qingping IoT account to access the developer portal.
+
+### 2. Get API Credentials
 
 1. Go to [developer.qingping.co](https://developer.qingping.co)
-2. Create an account or sign in
+2. Sign in with the **same phone/email** used in the Qingping IoT app
 3. Create a new application
 4. Copy your **App Key** (Client ID) and **App Secret** (Client Secret)
 
-### 2. Configure the App
+### 3. Configure the App
 
 1. Launch Qingping Air Monitor
 2. Click the menu bar icon → **Settings** (⚙️)
@@ -103,7 +114,7 @@ Set how often the app fetches new data:
 1. Open **Settings** → **General** tab
 2. Select your preferred interval
 
-> **Note:** Qingping devices upload data every 15 minutes by default. Setting a shorter refresh interval won't provide more frequent data updates.
+> **Note:** Qingping devices upload data every 15 minutes by default. To increase the upload frequency (up to every minute), install the [Qingping IoT app](https://apps.apple.com/app/qingping-iot/id1447513201) on your phone and configure the device's data upload interval from there.
 
 ### Multiple Devices
 
@@ -142,60 +153,6 @@ QingpingAirMonitor/
     ├── SettingsView.swift             # Settings window
     └── SensorRowView.swift            # Sensor display components
 ```
-
-### Key Technologies
-
-- **SwiftUI** — Modern declarative UI framework
-- **Swift Concurrency** — async/await, actors for thread safety
-- **Keychain Services** — Secure credential storage
-- **Network Framework** — Connectivity monitoring
-- **OAuth 2.0** — Secure API authentication
-
-## Security
-
-- ✅ App Sandbox enabled
-- ✅ Credentials stored in macOS Keychain
-- ✅ No sensitive data in logs
-- ✅ Network timeouts configured
-- ✅ Input validation on credentials
-- ✅ MAC addresses obfuscated in UI
-
-## Development
-
-### Requirements
-
-- Xcode 15.0+
-- macOS 14.0+ SDK
-
-### Building
-
-```bash
-# Clone
-git clone https://github.com/yourusername/qingping-air-monitor.git
-
-# Build via command line
-cd qingping-air-monitor/QingpingAirMonitor
-xcodebuild -scheme QingpingAirMonitor -configuration Release build
-```
-
-### Project Structure
-
-The app follows the **MVVM-S** (Model-View-ViewModel-Service) architecture:
-
-- **Models** — Data structures and business logic
-- **Views** — SwiftUI views
-- **Managers** — AppState acts as the ViewModel
-- **Services** — Network, authentication, and storage services
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
