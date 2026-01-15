@@ -40,6 +40,37 @@ struct AirQualityData {
     }
 }
 
+// MARK: - Display Text Extension
+
+extension AirQualityData {
+    /// Genera el texto para mostrar en la barra de menú según las opciones seleccionadas
+    func displayText(options: MenuBarDisplayOptions) -> String {
+        var parts: [String] = []
+
+        if options.showTemperature, let temp = temperature {
+            parts.append(String(format: "%.1f°", temp))
+        }
+
+        if options.showHumidity, let hum = humidity {
+            parts.append(String(format: "%.0f%%", hum))
+        }
+
+        if options.showCO2, let co2Value = co2 {
+            parts.append("\(co2Value)ppm")
+        }
+
+        if options.showPM25, let pm25Value = pm25 {
+            parts.append("PM\(pm25Value)")
+        }
+
+        if options.showPM10, let pm10Value = pm10 {
+            parts.append("PM10:\(pm10Value)")
+        }
+
+        return parts.isEmpty ? "—" : parts.joined(separator: " ")
+    }
+}
+
 enum AirQualityLevel: String {
     case good = "Bueno"
     case moderate = "Moderado"

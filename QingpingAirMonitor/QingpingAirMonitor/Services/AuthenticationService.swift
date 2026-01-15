@@ -3,12 +3,19 @@ import Foundation
 actor AuthenticationService {
     private let tokenURL = URL(string: "https://oauth.cleargrass.com/oauth2/token")!
     private let keychainService: KeychainService
+    private let session: URLSession
 
     private var cachedToken: String?
     private var tokenExpiration: Date?
 
     init(keychainService: KeychainService) {
         self.keychainService = keychainService
+
+        // Configurar session con timeouts apropiados
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 15
+        config.timeoutIntervalForResource = 30
+        self.session = URLSession(configuration: config)
     }
 
     func getValidToken() async throws -> String {
@@ -27,21 +34,15 @@ actor AuthenticationService {
     }
 
     private func refreshToken() async throws -> String {
-        guard let credentials = keychainService.getCredentials() else {
-            print("[Auth] No credentials found")
+        guard let credentials = await keychainService.getCredentials() else {
             throw AuthError.noCredentials
         }
-
-        print("[Auth] Got credentials - clientId: \(credentials.clientId.prefix(5))...")
 
         let credentialString = "\(credentials.clientId):\(credentials.clientSecret)"
         guard let credentialData = credentialString.data(using: .utf8) else {
             throw AuthError.encodingError
         }
         let base64Credentials = credentialData.base64EncodedString()
-
-        print("[Auth] Base64: \(base64Credentials.prefix(20))...")
-        print("[Auth] Requesting token from: \(tokenURL)")
 
         var request = URLRequest(url: tokenURL)
         request.httpMethod = "POST"
@@ -51,18 +52,10 @@ actor AuthenticationService {
         let bodyParams = "grant_type=client_credentials&scope=device_full_access"
         request.httpBody = bodyParams.data(using: .utf8)
 
-        print("[Auth] Sending request...")
-        let (data, response) = try await URLSession.shared.data(for: request)
-        print("[Auth] Got response")
+        let (data, response) = try await session.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            print("[Auth] Invalid response type")
             throw AuthError.invalidResponse
-        }
-
-        print("[Auth] Status code: \(httpResponse.statusCode)")
-        if let responseBody = String(data: data, encoding: .utf8) {
-            print("[Auth] Response body: \(responseBody)")
         }
 
         guard httpResponse.statusCode == 200 else {
@@ -73,7 +66,6 @@ actor AuthenticationService {
         }
 
         let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
-        print("[Auth] Token obtained successfully!")
 
         cachedToken = tokenResponse.accessToken
         tokenExpiration = Date().addingTimeInterval(TimeInterval(tokenResponse.expiresIn - 60))
@@ -99,8 +91,9 @@ enum AuthError: LocalizedError {
             return "Respuesta inválida del servidor"
         case .tokenExpired:
             return "Token expirado"
-        case .serverError(let code, let message):
-            return "Error del servidor (\(code)): \(message)"
+        case .serverError(let code, _):
+            // No exponer detalles del servidor al usuario
+            return "Error de autenticación (código \(code))"
         }
     }
 }

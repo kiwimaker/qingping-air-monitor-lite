@@ -64,9 +64,25 @@ struct SettingsView: View {
 
                 TextField("App Key (Client ID)", text: $clientId)
                     .textFieldStyle(.roundedBorder)
+                    .onChange(of: clientId) { _, newValue in
+                        // Validar: solo caracteres alfanuméricos, guiones y guiones bajos
+                        let filtered = newValue.filter { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" }
+                        if filtered != newValue {
+                            clientId = filtered
+                        }
+                    }
 
                 SecureField("App Secret (Client Secret)", text: $clientSecret)
                     .textFieldStyle(.roundedBorder)
+                    .onChange(of: clientSecret) { _, newValue in
+                        // No filtrar el placeholder
+                        guard newValue != "••••••••••••••••" else { return }
+                        // Validar: solo caracteres alfanuméricos y símbolos seguros
+                        let filtered = newValue.filter { $0.isLetter || $0.isNumber || $0 == "-" || $0 == "_" || $0 == "." }
+                        if filtered != newValue {
+                            clientSecret = filtered
+                        }
+                    }
 
                 HStack {
                     if hasExistingCredentials {
@@ -130,7 +146,7 @@ struct SettingsView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "aqi.medium")
                         if let data = appState.currentData {
-                            Text(previewText(data: data))
+                            Text(data.displayText(options: appState.menuBarDisplayOptions))
                                 .font(.system(.body, design: .rounded))
                         } else {
                             Text("—")
@@ -145,29 +161,6 @@ struct SettingsView: View {
             }
         }
         .padding()
-    }
-
-    private func previewText(data: AirQualityData) -> String {
-        let options = appState.menuBarDisplayOptions
-        var parts: [String] = []
-
-        if options.showTemperature, let temp = data.temperature {
-            parts.append(String(format: "%.1f°", temp))
-        }
-        if options.showHumidity, let humidity = data.humidity {
-            parts.append(String(format: "%.0f%%", humidity))
-        }
-        if options.showCO2, let co2 = data.co2 {
-            parts.append("\(co2)ppm")
-        }
-        if options.showPM25, let pm25 = data.pm25 {
-            parts.append("PM\(pm25)")
-        }
-        if options.showPM10, let pm10 = data.pm10 {
-            parts.append("PM10:\(pm10)")
-        }
-
-        return parts.isEmpty ? "—" : parts.joined(separator: " ")
     }
 
     // MARK: - General Tab

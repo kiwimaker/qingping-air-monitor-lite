@@ -9,7 +9,7 @@ struct MenuBarView: View {
 
             Divider()
 
-            if appState.isConfigured {
+            if appState.isConfiguredSync {
                 if let data = appState.currentData {
                     sensorsSection(data: data)
                 } else if appState.isLoading {
@@ -42,7 +42,7 @@ struct MenuBarView: View {
                 Text("Qingping Air Monitor")
                     .font(.headline)
                 if let device = appState.selectedDevice {
-                    Text(device.info.name ?? device.info.mac)
+                    Text(sanitizedDeviceName(device))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -143,6 +143,16 @@ struct MenuBarView: View {
         }
     }
 
+    /// Ofusca la MAC address si no hay nombre de dispositivo
+    private func sanitizedDeviceName(_ device: DeviceWithData) -> String {
+        if let name = device.info.name, !name.isEmpty {
+            return name
+        }
+        // Mostrar solo los últimos 4 caracteres de la MAC
+        let mac = device.info.mac
+        return "Device ...\(mac.suffix(4))"
+    }
+
     // MARK: - Loading
 
     private var loadingSection: some View {
@@ -234,7 +244,7 @@ struct MenuBarView: View {
             if appState.devices.count > 1 {
                 Menu {
                     ForEach(appState.devices) { device in
-                        Button(device.info.name ?? device.info.mac) {
+                        Button(sanitizedDeviceName(device)) {
                             appState.selectedDeviceMac = device.info.mac
                             Task { await appState.refreshData() }
                         }

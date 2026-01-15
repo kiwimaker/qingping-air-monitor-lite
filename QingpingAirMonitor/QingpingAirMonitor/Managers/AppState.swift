@@ -1,8 +1,9 @@
 import SwiftUI
 import Combine
+import Network
 
 enum ConnectionStatus {
-    case connected, disconnected, connecting, error
+    case connected, disconnected, connecting, error, noNetwork
 
     var color: Color {
         switch self {
@@ -10,6 +11,7 @@ enum ConnectionStatus {
         case .disconnected: return .gray
         case .connecting: return .yellow
         case .error: return .red
+        case .noNetwork: return .orange
         }
     }
 
@@ -19,6 +21,7 @@ enum ConnectionStatus {
         case .disconnected: return "Desconectado"
         case .connecting: return "Conectando..."
         case .error: return "Error"
+        case .noNetwork: return "Sin conexión"
         }
     }
 }
@@ -32,9 +35,16 @@ final class AppState: ObservableObject {
     @Published var isLoading = false
     @Published var lastError: String?
     @Published var connectionStatus: ConnectionStatus = .disconnected
-    @Published var refreshInterval: TimeInterval = 900
+    @Published var isNetworkAvailable = true
     @Published var menuBarDisplayOptions: MenuBarDisplayOptions {
         didSet { saveDisplayOptions() }
+    }
+
+    // refreshInterval con persistencia
+    @Published var refreshInterval: TimeInterval {
+        didSet {
+            UserDefaults.standard.set(refreshInterval, forKey: refreshIntervalKey)
+        }
     }
 
     // MARK: - Services
@@ -42,13 +52,24 @@ final class AppState: ObservableObject {
     private var apiService: QingpingAPIService?
     private var authService: AuthenticationService?
 
+    // MARK: - Network Monitor
+    private let networkMonitor = NWPathMonitor()
+    private let monitorQueue = DispatchQueue(label: "com.qingping.networkmonitor")
+
     // MARK: - Timer
     private var refreshTask: Task<Void, Never>?
+    private var hasLaunched = false
 
     // MARK: - Computed Properties
     var isConfigured: Bool {
-        keychainService.hasCredentials
+        get async {
+            await keychainService.hasCredentials
+        }
     }
+
+    // Versión síncrona para UI (usa cache)
+    private var _isConfiguredCache = false
+    var isConfiguredSync: Bool { _isConfiguredCache }
 
     var selectedDevice: DeviceWithData? {
         devices.first { $0.info.mac == selectedDeviceMac }
@@ -56,14 +77,78 @@ final class AppState: ObservableObject {
 
     // MARK: - UserDefaults Keys
     private let displayOptionsKey = "menuBarDisplayOptions"
+    private let refreshIntervalKey = "refreshInterval"
 
     // MARK: - Initialization
 
     init() {
+        // Cargar preferencias guardadas
         menuBarDisplayOptions = Self.loadDisplayOptions()
-        setupServices()
-        // NO iniciar refresh aquí - debe hacerse después de que la UI esté lista
+
+        // Cargar refreshInterval persistido
+        let savedInterval = UserDefaults.standard.double(forKey: refreshIntervalKey)
+        refreshInterval = savedInterval > 0 ? savedInterval : 900 // Default 15 min
+
+        // Configurar monitoreo de red
+        setupNetworkMonitoring()
+
+        // Configurar observador de wake from sleep
+        setupWakeNotification()
+
+        // Actualizar cache de credenciales
+        Task {
+            _isConfiguredCache = await keychainService.hasCredentials
+            if _isConfiguredCache {
+                setupServices()
+            }
+        }
     }
+
+    deinit {
+        networkMonitor.cancel()
+    }
+
+    // MARK: - Network Monitoring
+
+    private func setupNetworkMonitoring() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                let wasAvailable = self.isNetworkAvailable
+                self.isNetworkAvailable = path.status == .satisfied
+
+                // Si la red vuelve a estar disponible, refrescar datos
+                if !wasAvailable && self.isNetworkAvailable && self._isConfiguredCache {
+                    await self.refreshData()
+                }
+
+                // Actualizar estado de conexión si no hay red
+                if !self.isNetworkAvailable {
+                    self.connectionStatus = .noNetwork
+                }
+            }
+        }
+        networkMonitor.start(queue: monitorQueue)
+    }
+
+    // MARK: - Wake from Sleep Detection
+
+    private func setupWakeNotification() {
+        NotificationCenter.default.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self, self._isConfiguredCache else { return }
+                // Esperar un momento para que la red se restablezca
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await self.refreshData()
+            }
+        }
+    }
+
+    // MARK: - Display Options
 
     private static func loadDisplayOptions() -> MenuBarDisplayOptions {
         guard let data = UserDefaults.standard.data(forKey: "menuBarDisplayOptions"),
@@ -81,22 +166,38 @@ final class AppState: ObservableObject {
 
     /// Llamar después de que la app esté completamente inicializada
     func onAppLaunch() {
-        if isConfigured {
-            startPeriodicRefresh()
+        guard !hasLaunched else { return }
+        hasLaunched = true
+
+        Task {
+            _isConfiguredCache = await keychainService.hasCredentials
+            if _isConfiguredCache {
+                startPeriodicRefresh()
+            }
         }
     }
 
     func setupServices() {
-        guard isConfigured else { return }
+        Task {
+            guard await keychainService.hasCredentials else { return }
 
-        authService = AuthenticationService(keychainService: keychainService)
-        apiService = QingpingAPIService(authService: authService!)
+            authService = AuthenticationService(keychainService: keychainService)
+            apiService = QingpingAPIService(authService: authService!)
+        }
     }
 
     // MARK: - Data Refresh
 
     func refreshData() async {
-        guard isConfigured else {
+        // Verificar conectividad de red primero
+        guard isNetworkAvailable else {
+            lastError = "Sin conexión a internet"
+            connectionStatus = .noNetwork
+            return
+        }
+
+        let configured = await keychainService.hasCredentials
+        guard configured else {
             lastError = "API no configurada"
             connectionStatus = .disconnected
             return
@@ -104,6 +205,8 @@ final class AppState: ObservableObject {
 
         if apiService == nil {
             setupServices()
+            // Esperar a que los servicios se configuren
+            try? await Task.sleep(nanoseconds: 100_000_000)
         }
 
         guard let apiService = apiService else { return }
@@ -146,14 +249,22 @@ final class AppState: ObservableObject {
 
     func startPeriodicRefresh() {
         refreshTask?.cancel()
+        refreshTask = nil
 
         refreshTask = Task {
             while !Task.isCancelled {
-                if isConfigured {
+                let configured = await keychainService.hasCredentials
+                if configured {
                     await refreshData()
                 }
 
-                try? await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+                // Manejar correctamente la cancelación durante el sleep
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(refreshInterval * 1_000_000_000))
+                } catch {
+                    // Task fue cancelado, salir del loop
+                    break
+                }
             }
         }
     }
@@ -165,8 +276,10 @@ final class AppState: ObservableObject {
 
     func updateRefreshInterval(_ interval: TimeInterval) {
         refreshInterval = interval
-        if isConfigured {
-            startPeriodicRefresh()
+        Task {
+            if await keychainService.hasCredentials {
+                startPeriodicRefresh()
+            }
         }
     }
 
@@ -174,12 +287,16 @@ final class AppState: ObservableObject {
 
     func saveCredentials(clientId: String, clientSecret: String) async throws {
         let credentials = APICredentials(clientId: clientId, clientSecret: clientSecret)
-        try keychainService.saveCredentials(credentials)
+        try await keychainService.saveCredentials(credentials)
 
         // Reset services with new credentials
         authService = nil
         apiService = nil
+        _isConfiguredCache = true
         setupServices()
+
+        // Esperar a que los servicios se inicialicen
+        try? await Task.sleep(nanoseconds: 200_000_000)
 
         // Intentar obtener token y datos inmediatamente para validar credenciales
         await refreshData()
@@ -191,13 +308,16 @@ final class AppState: ObservableObject {
     }
 
     func clearCredentials() {
-        keychainService.deleteCredentials()
-        stopPeriodicRefresh()
-        authService = nil
-        apiService = nil
-        currentData = nil
-        devices = []
-        selectedDeviceMac = nil
-        connectionStatus = .disconnected
+        Task {
+            await keychainService.deleteCredentials()
+            stopPeriodicRefresh()
+            authService = nil
+            apiService = nil
+            currentData = nil
+            devices = []
+            selectedDeviceMac = nil
+            connectionStatus = .disconnected
+            _isConfiguredCache = false
+        }
     }
 }

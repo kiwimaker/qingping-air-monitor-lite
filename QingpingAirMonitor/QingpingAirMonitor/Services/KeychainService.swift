@@ -1,12 +1,12 @@
 import Foundation
 import Security
 
-struct APICredentials {
+struct APICredentials: Sendable {
     let clientId: String
     let clientSecret: String
 }
 
-final class KeychainService {
+actor KeychainService {
     private let service = "com.qingping.airmonitor2"
     private let clientIdKey = "qingping_client_id"
     private let clientSecretKey = "qingping_client_secret"
@@ -35,7 +35,8 @@ final class KeychainService {
             kSecAttrService as String: service,
             kSecAttrAccount as String: key,
             kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlocked
+            // Más restrictivo: no se copia en backups a otros dispositivos
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
 
         let status = SecItemAdd(addQuery as CFDictionary, nil)
@@ -106,9 +107,13 @@ enum KeychainError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .encodingError: return "Failed to encode data"
-        case .saveFailed(let status): return "Keychain save failed: \(status)"
-        case .notFound: return "Item not found in keychain"
+        case .encodingError:
+            return "Error al codificar los datos"
+        case .saveFailed:
+            // No exponer código de error técnico al usuario
+            return "No se pudieron guardar las credenciales. Intenta de nuevo."
+        case .notFound:
+            return "Credenciales no encontradas"
         }
     }
 }
