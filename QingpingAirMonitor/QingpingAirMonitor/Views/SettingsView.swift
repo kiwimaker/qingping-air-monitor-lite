@@ -327,7 +327,7 @@ struct SettingsView: View {
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text("v1.0.0")
+            Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
