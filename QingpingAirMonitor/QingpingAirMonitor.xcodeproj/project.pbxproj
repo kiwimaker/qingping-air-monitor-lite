@@ -227,7 +227,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.air-monitor";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.airmonitor2";
 				PRODUCT_NAME = "Qingping Air Monitor";
 				SDKROOT = macosx;
 			};
@@ -249,7 +249,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.air-monitor";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.airmonitor2";
 				PRODUCT_NAME = "Qingping Air Monitor";
 				SDKROOT = macosx;
 			};

@@ -7,7 +7,7 @@ struct APICredentials {
 }
 
 final class KeychainService {
-    private let service = "com.qingping.air-monitor"
+    private let service = "com.qingping.airmonitor2"
     private let clientIdKey = "qingping_client_id"
     private let clientSecretKey = "qingping_client_secret"
 

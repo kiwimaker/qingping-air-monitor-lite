@@ -3,18 +3,19 @@ import SwiftUI
 @main
 struct QingpingAirMonitorApp: App {
     @StateObject private var appState = AppState()
-    
+
     var body: some Scene {
-        // MenuBarExtra es la forma oficial de SwiftUI para crear apps de barra de menú
         MenuBarExtra {
             MenuBarView()
                 .environmentObject(appState)
+                .onAppear {
+                    appState.onAppLaunch()
+                }
         } label: {
-            Label("Air", systemImage: "cloud.fill")
+            Image(systemName: "aqi.medium")
         }
         .menuBarExtraStyle(.window)
-        
-        // Ventana de ajustes
+
         Settings {
             SettingsView()
                 .environmentObject(appState)

@@ -55,7 +55,11 @@ final class AppState: ObservableObject {
 
     init() {
         setupServices()
-        // Iniciar refresh automáticamente si está configurado
+        // NO iniciar refresh aquí - debe hacerse después de que la UI esté lista
+    }
+
+    /// Llamar después de que la app esté completamente inicializada
+    func onAppLaunch() {
         if isConfigured {
             startPeriodicRefresh()
         }
