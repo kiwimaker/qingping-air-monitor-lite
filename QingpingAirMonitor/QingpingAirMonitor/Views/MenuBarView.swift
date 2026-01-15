@@ -210,8 +210,8 @@ struct MenuBarView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button("Abrir Ajustes") {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            SettingsLink {
+                Text("Abrir Ajustes")
             }
             .buttonStyle(.borderedProminent)
         }
@@ -248,9 +248,7 @@ struct MenuBarView: View {
 
             Spacer()
 
-            Button(action: {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            }) {
+            SettingsLink {
                 Image(systemName: "gear")
             }
             .buttonStyle(.borderless)
