@@ -41,7 +41,7 @@ struct MenuBarLabel: View {
         var parts: [String] = []
 
         if options.showTemperature, let temp = data.temperature {
-            parts.append(String(format: "%.0f°", temp))
+            parts.append(String(format: "%.1f°", temp))
         }
 
         if options.showHumidity, let humidity = data.humidity {

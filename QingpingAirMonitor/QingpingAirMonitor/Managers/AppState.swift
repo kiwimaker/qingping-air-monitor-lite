@@ -32,7 +32,7 @@ final class AppState: ObservableObject {
     @Published var isLoading = false
     @Published var lastError: String?
     @Published var connectionStatus: ConnectionStatus = .disconnected
-    @Published var refreshInterval: TimeInterval = 60
+    @Published var refreshInterval: TimeInterval = 900
     @Published var menuBarDisplayOptions: MenuBarDisplayOptions {
         didSet { saveDisplayOptions() }
     }

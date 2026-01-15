@@ -152,7 +152,7 @@ struct SettingsView: View {
         var parts: [String] = []
 
         if options.showTemperature, let temp = data.temperature {
-            parts.append(String(format: "%.0f°", temp))
+            parts.append(String(format: "%.1f°", temp))
         }
         if options.showHumidity, let humidity = data.humidity {
             parts.append(String(format: "%.0f%%", humidity))
@@ -178,11 +178,15 @@ struct SettingsView: View {
                 Text("Intervalo de actualización")
                     .font(.headline)
 
+                Text("El dispositivo sube datos cada 15 min por defecto (configurable en Qingping IoT)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
                 Picker("Actualizar cada", selection: $refreshInterval) {
-                    Text("30 segundos").tag(30.0)
-                    Text("1 minuto").tag(60.0)
-                    Text("5 minutos").tag(300.0)
-                    Text("15 minutos").tag(900.0)
+                    Text("1 min").tag(60.0)
+                    Text("5 min").tag(300.0)
+                    Text("15 min").tag(900.0)
+                    Text("30 min").tag(1800.0)
                 }
                 .pickerStyle(.segmented)
                 .onChange(of: refreshInterval) {
