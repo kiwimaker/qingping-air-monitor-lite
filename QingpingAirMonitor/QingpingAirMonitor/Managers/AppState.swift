@@ -55,9 +55,7 @@ final class AppState: ObservableObject {
 
     init() {
         setupServices()
-        if isConfigured {
-            startPeriodicRefresh()
-        }
+        // startPeriodicRefresh() will be called manually from AppDelegate
     }
 
     func setupServices() {
