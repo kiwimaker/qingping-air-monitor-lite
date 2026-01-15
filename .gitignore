@@ -129,6 +129,10 @@ secrets/
 # Build & Archives
 # =============================================================================
 
+## Distribution builds
+dist/
+*.dmg
+
 ## Archives
 *.xcarchive
 *.ipa
