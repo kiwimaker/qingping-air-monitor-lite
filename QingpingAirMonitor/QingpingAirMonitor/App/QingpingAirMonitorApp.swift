@@ -20,6 +20,13 @@ struct QingpingAirMonitorApp: App {
             SettingsView()
                 .environmentObject(appState)
         }
+
+        Window("Histórico", id: "history-window") {
+            HistoryWindowView()
+                .environmentObject(appState)
+        }
+        .defaultSize(width: 800, height: 550)
+        .windowResizability(.contentMinSize)
     }
 }
 

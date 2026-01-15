@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         VStack(spacing: 0) {
@@ -263,6 +264,17 @@ struct MenuBarView: View {
             }
             .buttonStyle(.borderless)
             .help("Ajustes")
+
+            Spacer()
+
+            Button {
+                openWindow(id: "history-window")
+            } label: {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+            }
+            .buttonStyle(.borderless)
+            .help("Ver histórico")
+            .disabled(!appState.isHistoryEnabled)
 
             Spacer()
 

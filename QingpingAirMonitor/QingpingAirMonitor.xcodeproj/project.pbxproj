@@ -20,6 +20,10 @@
 		C49AB844B1C99A2ABA54DDEC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A70D71D340B8AFE8779A467 /* Assets.xcassets */; };
 		FB9A00A7B9E9CCA0CD5A75E9 /* AirQualityData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */; };
 		D8E7A1234567890ABCDEF123 /* MenuBarDisplayOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E7A1234567890ABCDEF124 /* MenuBarDisplayOptions.swift */; };
+		A1B2C3D4E5F6A7B8C9D0E1F3 /* SensorReading.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F2 /* SensorReading.swift */; };
+		B2C3D4E5F6A7B8C9D0E1F2A4 /* HistoryDatabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A3 /* HistoryDatabaseService.swift */; };
+		C3D4E5F6A7B8C9D0E1F2A3B5 /* SensorLineChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D4E5F6A7B8C9D0E1F2A3B4 /* SensorLineChart.swift */; };
+		D4E5F6A7B8C9D0E1F2A3B4C6 /* HistoryWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F6A7B8C9D0E1F2A3B4C5 /* HistoryWindowView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,17 +43,31 @@
 		E58A9F1F48EA68CB85B4858B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EC80001BE9B5047F6CC1411A /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
 		F726E70DC9800EC7A3C8CBF5 /* QingpingAirMonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QingpingAirMonitorApp.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* SensorReading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorReading.swift; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2A3 /* HistoryDatabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryDatabaseService.swift; sourceTree = "<group>"; };
+		C3D4E5F6A7B8C9D0E1F2A3B4 /* SensorLineChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorLineChart.swift; sourceTree = "<group>"; };
+		D4E5F6A7B8C9D0E1F2A3B4C5 /* HistoryWindowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryWindowView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		11FFCA32D36CD7447F971E03 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				E5F6A7B8C9D0E1F2A3B4C5D6 /* Charts */,
+				D4E5F6A7B8C9D0E1F2A3B4C5 /* HistoryWindowView.swift */,
 				41545D30C46B6F78303F2054 /* MenuBarView.swift */,
 				9E2C29D591872B0303A94D6E /* SensorRowView.swift */,
 				9144D4BC94C290124031117D /* SettingsView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		E5F6A7B8C9D0E1F2A3B4C5D6 /* Charts */ = {
+			isa = PBXGroup;
+			children = (
+				C3D4E5F6A7B8C9D0E1F2A3B4 /* SensorLineChart.swift */,
+			);
+			path = Charts;
 			sourceTree = "<group>";
 		};
 		3B3D36543BBB2E7C73917EA8 /* QingpingAirMonitor */ = {
@@ -85,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				EC80001BE9B5047F6CC1411A /* AuthenticationService.swift */,
+				B2C3D4E5F6A7B8C9D0E1F2A3 /* HistoryDatabaseService.swift */,
 				9E9143854DFF409425153703 /* KeychainService.swift */,
 				1568863FAEC2D763381EB7FC /* QingpingAPIService.swift */,
 			);
@@ -97,6 +116,7 @@
 				17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */,
 				6CD972AD7C1555D18D468A5B /* Device.swift */,
 				D8E7A1234567890ABCDEF124 /* MenuBarDisplayOptions.swift */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* SensorReading.swift */,
 				07DA759886AC406271640481 /* TokenResponse.swift */,
 			);
 			path = Models;
@@ -201,11 +221,15 @@
 				C147C529464994D263A86B19 /* AppState.swift in Sources */,
 				6C3BC65703830D0C6D7ECCF6 /* AuthenticationService.swift in Sources */,
 				5C2A3A4774B6BEDC19371664 /* Device.swift in Sources */,
+				B2C3D4E5F6A7B8C9D0E1F2A4 /* HistoryDatabaseService.swift in Sources */,
+				D4E5F6A7B8C9D0E1F2A3B4C6 /* HistoryWindowView.swift in Sources */,
 				563BC32863A71D89AD7A62AB /* KeychainService.swift in Sources */,
 				D8E7A1234567890ABCDEF123 /* MenuBarDisplayOptions.swift in Sources */,
 				53621CBFA767BCCE77EE1334 /* MenuBarView.swift in Sources */,
 				534FAEEC49F2BCFDBF1111EB /* QingpingAPIService.swift in Sources */,
 				0DA82F83FF2D920DA74EF5F0 /* QingpingAirMonitorApp.swift in Sources */,
+				C3D4E5F6A7B8C9D0E1F2A3B5 /* SensorLineChart.swift in Sources */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* SensorReading.swift in Sources */,
 				AC32FFAD42062C2931B89402 /* SensorRowView.swift in Sources */,
 				A6FBEF2935EF195BB51DB503 /* SettingsView.swift in Sources */,
 				6EBCB427CFA8D69F952825C7 /* TokenResponse.swift in Sources */,
@@ -293,7 +317,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -314,7 +338,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -361,7 +385,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -376,7 +400,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";

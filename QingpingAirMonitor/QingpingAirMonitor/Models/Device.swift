@@ -58,3 +58,29 @@ struct DeviceWithData: Codable, Identifiable {
         }
     }
 }
+
+// MARK: - Historical Data Response (formato diferente de la API)
+
+struct HistoricalDataResponse: Codable {
+    let total: Int
+    let data: [HistoricalReading]
+}
+
+struct HistoricalReading: Codable {
+    let timestamp: TimestampValue
+    let battery: SensorValue?
+    let temperature: SensorValue?
+    let humidity: SensorValue?
+    let co2: SensorValue?
+    let pm25: SensorValue?
+    let pm10: SensorValue?
+    let tvoc: SensorValue?
+
+    struct TimestampValue: Codable {
+        let value: Int
+    }
+
+    struct SensorValue: Codable {
+        let value: Double
+    }
+}

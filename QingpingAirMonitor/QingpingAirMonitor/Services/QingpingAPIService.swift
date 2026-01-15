@@ -88,36 +88,66 @@ actor QingpingAPIService {
         return devicesResponse.devices
     }
 
-    func fetchHistoricalData(mac: String, startTime: Int, endTime: Int) async throws -> [DeviceWithData] {
-        let token = try await authService.getValidToken()
-        let timestamp = Int(Date().timeIntervalSince1970)
+    func fetchHistoricalData(mac: String, startTime: Int, endTime: Int) async throws -> [HistoricalReading] {
+        var allReadings: [HistoricalReading] = []
+        var offset = 0
+        let limit = 200
+        var totalReported = 0
 
-        var components = URLComponents(string: "\(baseURL)/devices/data")!
-        components.queryItems = [
-            URLQueryItem(name: "mac", value: mac),
-            URLQueryItem(name: "start_time", value: String(startTime)),
-            URLQueryItem(name: "end_time", value: String(endTime)),
-            URLQueryItem(name: "timestamp", value: String(timestamp))
-        ]
+        while true {
+            let token = try await authService.getValidToken()
+            let timestamp = Int(Date().timeIntervalSince1970 * 1000)
 
-        guard let url = components.url else {
-            throw APIError.invalidURL
+            var components = URLComponents(string: "\(baseURL)/devices/data")!
+            components.queryItems = [
+                URLQueryItem(name: "mac", value: mac),
+                URLQueryItem(name: "start_time", value: String(startTime)),
+                URLQueryItem(name: "end_time", value: String(endTime)),
+                URLQueryItem(name: "timestamp", value: String(timestamp)),
+                URLQueryItem(name: "limit", value: String(limit)),
+                URLQueryItem(name: "offset", value: String(offset))
+            ]
+
+            guard let url = components.url else {
+                throw APIError.invalidURL
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "GET"
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+            let (data, response) = try await session.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+
+            if httpResponse.statusCode != 200 {
+                if !allReadings.isEmpty { break }
+                throw APIError.httpError(statusCode: httpResponse.statusCode, message: "Error fetching historical data")
+            }
+
+            let historyResponse: HistoricalDataResponse
+            do {
+                historyResponse = try JSONDecoder().decode(HistoricalDataResponse.self, from: data)
+            } catch {
+                if !allReadings.isEmpty { break }
+                throw error
+            }
+
+            totalReported = historyResponse.total
+
+            if historyResponse.data.isEmpty { break }
+
+            allReadings.append(contentsOf: historyResponse.data)
+
+            if allReadings.count >= totalReported { break }
+
+            offset += limit
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-
-        let (data, response) = try await session.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.invalidResponse
-        }
-
-        let devicesResponse = try JSONDecoder().decode(DeviceDataResponse.self, from: data)
-        return devicesResponse.devices
+        return allReadings
     }
 }
 

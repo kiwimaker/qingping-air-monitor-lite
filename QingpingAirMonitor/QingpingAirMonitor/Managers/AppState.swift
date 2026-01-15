@@ -40,6 +40,15 @@ final class AppState: ObservableObject {
         didSet { saveDisplayOptions() }
     }
 
+    // MARK: - History Properties
+    @Published var isHistoryEnabled: Bool {
+        didSet { UserDefaults.standard.set(isHistoryEnabled, forKey: historyEnabledKey) }
+    }
+    @Published var historyRetention: HistoryRetention {
+        didSet { UserDefaults.standard.set(historyRetention.rawValue, forKey: historyRetentionKey) }
+    }
+    @Published var showHistoryWindow = false
+
     // refreshInterval con persistencia
     @Published var refreshInterval: TimeInterval {
         didSet {
@@ -51,6 +60,7 @@ final class AppState: ObservableObject {
     let keychainService = KeychainService()
     private var apiService: QingpingAPIService?
     private var authService: AuthenticationService?
+    private(set) var historyService: HistoryDatabaseService?
 
     // MARK: - Network Monitor
     private let networkMonitor = NWPathMonitor()
@@ -78,6 +88,8 @@ final class AppState: ObservableObject {
     // MARK: - UserDefaults Keys
     private let displayOptionsKey = "menuBarDisplayOptions"
     private let refreshIntervalKey = "refreshInterval"
+    private let historyEnabledKey = "historyEnabled"
+    private let historyRetentionKey = "historyRetention"
 
     // MARK: - Initialization
 
@@ -89,11 +101,19 @@ final class AppState: ObservableObject {
         let savedInterval = UserDefaults.standard.double(forKey: refreshIntervalKey)
         refreshInterval = savedInterval > 0 ? savedInterval : 900 // Default 15 min
 
+        // Cargar configuración de histórico
+        isHistoryEnabled = UserDefaults.standard.bool(forKey: historyEnabledKey)
+        let retentionRaw = UserDefaults.standard.string(forKey: historyRetentionKey) ?? HistoryRetention.unlimited.rawValue
+        historyRetention = HistoryRetention(rawValue: retentionRaw) ?? .unlimited
+
         // Configurar monitoreo de red
         setupNetworkMonitoring()
 
         // Configurar observador de wake from sleep
         setupWakeNotification()
+
+        // Inicializar servicio de histórico
+        setupHistoryService()
 
         // Actualizar cache de credenciales
         Task {
@@ -172,8 +192,18 @@ final class AppState: ObservableObject {
         Task {
             _isConfiguredCache = await keychainService.hasCredentials
             if _isConfiguredCache {
+                // Refrescar datos primero para tener selectedDeviceMac
+                await refreshData()
                 startPeriodicRefresh()
+
+                // Sincronizar histórico desde la API (llena gaps cuando la app estaba cerrada)
+                if isHistoryEnabled {
+                    await syncHistoryFromAPI()
+                }
             }
+
+            // Limpieza de histórico al iniciar
+            await cleanupOldHistory()
         }
     }
 
@@ -233,6 +263,11 @@ final class AppState: ObservableObject {
                     battery: sensorData.battery.map { Int($0.value) },
                     timestamp: sensorData.timestamp.map { Date(timeIntervalSince1970: TimeInterval($0.value)) }
                 )
+
+                // Guardar en histórico si está habilitado
+                if isHistoryEnabled, let data = currentData {
+                    await saveToHistory(data: data, deviceMac: device.info.mac)
+                }
             }
 
             connectionStatus = .connected
@@ -318,6 +353,189 @@ final class AppState: ObservableObject {
             selectedDeviceMac = nil
             connectionStatus = .disconnected
             _isConfiguredCache = false
+        }
+    }
+
+    // MARK: - History Management
+
+    private func setupHistoryService() {
+        do {
+            historyService = try HistoryDatabaseService()
+        } catch {
+            print("Error inicializando servicio de histórico: \(error.localizedDescription)")
+        }
+    }
+
+    private func saveToHistory(data: AirQualityData, deviceMac: String) async {
+        guard let service = historyService else { return }
+
+        let reading = SensorReading(from: data, deviceMac: deviceMac)
+        do {
+            try await service.insertReading(reading)
+        } catch {
+            print("Error guardando lectura en histórico: \(error.localizedDescription)")
+        }
+    }
+
+    func cleanupOldHistory() async {
+        guard let service = historyService,
+              let cutoffDate = historyRetention.cutoffDate else { return }
+
+        do {
+            let deleted = try await service.deleteOldReadings(olderThan: cutoffDate)
+            if deleted > 0 {
+                print("Limpieza de histórico: \(deleted) registros eliminados")
+            }
+        } catch {
+            print("Error limpiando histórico: \(error.localizedDescription)")
+        }
+    }
+
+    func deleteAllHistory() async {
+        guard let service = historyService else { return }
+
+        do {
+            try await service.deleteAllReadings()
+        } catch {
+            print("Error eliminando histórico: \(error.localizedDescription)")
+        }
+    }
+
+    func getHistoryStats() async -> (count: Int, size: Int64, oldest: Date?, newest: Date?) {
+        guard let service = historyService else { return (0, 0, nil, nil) }
+
+        let count = await service.getRecordCount()
+        let size = await service.getDatabaseSize()
+        let range = await service.getDateRange()
+
+        return (count, size, range.oldest, range.newest)
+    }
+
+    func exportHistoryToCSV() async -> String? {
+        guard let service = historyService,
+              let deviceMac = selectedDeviceMac else { return nil }
+
+        do {
+            return try await service.exportAllToCSV(deviceMac: deviceMac)
+        } catch {
+            print("Error exportando CSV: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func fetchHistoryReadings(for range: TimeRange) async -> [SensorReading] {
+        guard let service = historyService,
+              let deviceMac = selectedDeviceMac else { return [] }
+
+        do {
+            return try await service.fetchReadings(
+                deviceMac: deviceMac,
+                from: range.startDate,
+                to: Date()
+            )
+        } catch {
+            print("Error obteniendo lecturas: \(error.localizedDescription)")
+            return []
+        }
+    }
+
+    // MARK: - History Sync from API
+
+    /// Sincroniza el histórico desde la API de Qingping
+    /// Obtiene datos desde el último registro guardado hasta ahora
+    func syncHistoryFromAPI() async {
+        guard isHistoryEnabled,
+              let service = historyService,
+              let apiService = apiService,
+              let deviceMac = selectedDeviceMac else { return }
+
+        let lastTimestamp = await service.getLastTimestamp(deviceMac: deviceMac)
+
+        let startDate: Date
+        if let last = lastTimestamp {
+            startDate = last.addingTimeInterval(60)
+        } else {
+            startDate = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        }
+
+        let endDate = Date()
+
+        // No sincronizar si la diferencia es menor a 5 minutos
+        guard endDate.timeIntervalSince(startDate) > 300 else { return }
+
+        let startTime = Int(startDate.timeIntervalSince1970)
+        let endTime = Int(endDate.timeIntervalSince1970)
+
+        do {
+            let historicalData = try await apiService.fetchHistoricalData(
+                mac: deviceMac,
+                startTime: startTime,
+                endTime: endTime
+            )
+
+            let readings: [SensorReading] = historicalData.map { item in
+                SensorReading(
+                    deviceMac: deviceMac,
+                    timestamp: Date(timeIntervalSince1970: TimeInterval(item.timestamp.value)),
+                    co2: item.co2.map { Int($0.value) },
+                    pm25: item.pm25.map { Int($0.value) },
+                    pm10: item.pm10.map { Int($0.value) },
+                    temperature: item.temperature?.value,
+                    humidity: item.humidity?.value,
+                    battery: item.battery.map { Int($0.value) }
+                )
+            }
+
+            if !readings.isEmpty {
+                try await service.insertReadingsIgnoringDuplicates(readings)
+            }
+        } catch {
+            // Silently fail - sync errors shouldn't disrupt user experience
+        }
+    }
+
+    /// Sincronización forzada de los últimos N días (ignora lastTimestamp)
+    @Published var isSyncingHistory = false
+
+    func forceSyncHistory(days: Int) async {
+        guard let service = historyService,
+              let apiService = apiService,
+              let deviceMac = selectedDeviceMac else { return }
+
+        isSyncingHistory = true
+        defer { isSyncingHistory = false }
+
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .day, value: -days, to: endDate)!
+
+        let startTime = Int(startDate.timeIntervalSince1970)
+        let endTime = Int(endDate.timeIntervalSince1970)
+
+        do {
+            let historicalData = try await apiService.fetchHistoricalData(
+                mac: deviceMac,
+                startTime: startTime,
+                endTime: endTime
+            )
+
+            let readings: [SensorReading] = historicalData.map { item in
+                SensorReading(
+                    deviceMac: deviceMac,
+                    timestamp: Date(timeIntervalSince1970: TimeInterval(item.timestamp.value)),
+                    co2: item.co2.map { Int($0.value) },
+                    pm25: item.pm25.map { Int($0.value) },
+                    pm10: item.pm10.map { Int($0.value) },
+                    temperature: item.temperature?.value,
+                    humidity: item.humidity?.value,
+                    battery: item.battery.map { Int($0.value) }
+                )
+            }
+
+            if !readings.isEmpty {
+                try await service.insertReadingsIgnoringDuplicates(readings)
+            }
+        } catch {
+            // Error handled silently
         }
     }
 }

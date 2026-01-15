@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -11,6 +12,14 @@ struct SettingsView: View {
     @State private var alertMessage = ""
     @State private var hasExistingCredentials = false
     @State private var isSaving = false
+
+    // History states
+    @State private var historyRecordCount: Int = 0
+    @State private var historyDatabaseSize: Int64 = 0
+    @State private var historyOldestDate: Date?
+    @State private var historyNewestDate: Date?
+    @State private var showDeleteConfirmation = false
+    @State private var isExporting = false
 
     var body: some View {
         TabView {
@@ -29,12 +38,17 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
 
+            historyTab
+                .tabItem {
+                    Label("Histórico", systemImage: "chart.line.uptrend.xyaxis")
+                }
+
             aboutTab
                 .tabItem {
                     Label("Acerca de", systemImage: "info.circle")
                 }
         }
-        .frame(width: 450, height: 320)
+        .frame(width: 450, height: 380)
         .onAppear(perform: loadExistingSettings)
         .alert(alertTitle, isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }
@@ -216,6 +230,91 @@ struct SettingsView: View {
         .padding()
     }
 
+    // MARK: - History Tab
+
+    private var historyTab: some View {
+        Form {
+            Section {
+                Toggle("Guardar histórico de datos", isOn: $appState.isHistoryEnabled)
+
+                Text("Los datos se guardarán cada vez que se actualicen según el intervalo configurado")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            if appState.isHistoryEnabled {
+                Section {
+                    Picker("Retención máxima", selection: $appState.historyRetention) {
+                        ForEach(HistoryRetention.allCases) { retention in
+                            Text(retention.label).tag(retention)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Text("Los datos más antiguos se eliminarán automáticamente")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Section {
+                    LabeledContent("Registros almacenados") {
+                        Text("\(historyRecordCount)")
+                            .monospacedDigit()
+                    }
+
+                    LabeledContent("Espacio usado") {
+                        Text(formatBytes(historyDatabaseSize))
+                            .monospacedDigit()
+                    }
+
+                    if let oldest = historyOldestDate, let newest = historyNewestDate {
+                        LabeledContent("Rango de datos") {
+                            Text("\(formatDate(oldest)) - \(formatDate(newest))")
+                                .font(.caption)
+                        }
+                    }
+                }
+
+                Section {
+                    HStack {
+                        Button {
+                            exportHistory()
+                        } label: {
+                            if isExporting {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            } else {
+                                Label("Exportar CSV", systemImage: "square.and.arrow.up")
+                            }
+                        }
+                        .disabled(historyRecordCount == 0 || isExporting)
+
+                        Spacer()
+
+                        Button("Limpiar histórico", role: .destructive) {
+                            showDeleteConfirmation = true
+                        }
+                        .disabled(historyRecordCount == 0)
+                    }
+                }
+            }
+        }
+        .padding()
+        .onAppear { loadHistoryStats() }
+        .confirmationDialog(
+            "¿Eliminar todo el histórico?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Eliminar", role: .destructive) {
+                deleteHistory()
+            }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            Text("Esta acción no se puede deshacer. Se eliminarán \(historyRecordCount) registros.")
+        }
+    }
+
     // MARK: - About Tab
 
     private var aboutTab: some View {
@@ -308,6 +407,73 @@ struct SettingsView: View {
         alertTitle = "Borrado"
         alertMessage = "Credenciales eliminadas"
         showingAlert = true
+    }
+
+    // MARK: - History Actions
+
+    private func loadHistoryStats() {
+        Task {
+            let stats = await appState.getHistoryStats()
+            historyRecordCount = stats.count
+            historyDatabaseSize = stats.size
+            historyOldestDate = stats.oldest
+            historyNewestDate = stats.newest
+        }
+    }
+
+    private func exportHistory() {
+        isExporting = true
+
+        Task {
+            if let csvContent = await appState.exportHistoryToCSV() {
+                // Mostrar diálogo de guardar
+                let savePanel = NSSavePanel()
+                savePanel.allowedContentTypes = [.commaSeparatedText]
+                savePanel.nameFieldStringValue = "qingping_history_\(Date().timeIntervalSince1970).csv"
+
+                if savePanel.runModal() == .OK, let url = savePanel.url {
+                    do {
+                        try csvContent.write(to: url, atomically: true, encoding: .utf8)
+                        alertTitle = "Exportado"
+                        alertMessage = "Histórico exportado correctamente"
+                    } catch {
+                        alertTitle = "Error"
+                        alertMessage = "Error al guardar: \(error.localizedDescription)"
+                    }
+                    showingAlert = true
+                }
+            } else {
+                alertTitle = "Error"
+                alertMessage = "No hay datos para exportar"
+                showingAlert = true
+            }
+
+            isExporting = false
+        }
+    }
+
+    private func deleteHistory() {
+        Task {
+            await appState.deleteAllHistory()
+            loadHistoryStats()
+            alertTitle = "Eliminado"
+            alertMessage = "Histórico eliminado correctamente"
+            showingAlert = true
+        }
+    }
+
+    private func formatBytes(_ bytes: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: bytes)
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 }
 
