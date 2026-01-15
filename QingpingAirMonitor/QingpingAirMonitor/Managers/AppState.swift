@@ -33,6 +33,9 @@ final class AppState: ObservableObject {
     @Published var lastError: String?
     @Published var connectionStatus: ConnectionStatus = .disconnected
     @Published var refreshInterval: TimeInterval = 60
+    @Published var menuBarDisplayOptions: MenuBarDisplayOptions {
+        didSet { saveDisplayOptions() }
+    }
 
     // MARK: - Services
     let keychainService = KeychainService()
@@ -51,11 +54,29 @@ final class AppState: ObservableObject {
         devices.first { $0.info.mac == selectedDeviceMac }
     }
 
+    // MARK: - UserDefaults Keys
+    private let displayOptionsKey = "menuBarDisplayOptions"
+
     // MARK: - Initialization
 
     init() {
+        menuBarDisplayOptions = Self.loadDisplayOptions()
         setupServices()
         // NO iniciar refresh aquí - debe hacerse después de que la UI esté lista
+    }
+
+    private static func loadDisplayOptions() -> MenuBarDisplayOptions {
+        guard let data = UserDefaults.standard.data(forKey: "menuBarDisplayOptions"),
+              let options = try? JSONDecoder().decode(MenuBarDisplayOptions.self, from: data) else {
+            return .default
+        }
+        return options
+    }
+
+    private func saveDisplayOptions() {
+        if let data = try? JSONEncoder().encode(menuBarDisplayOptions) {
+            UserDefaults.standard.set(data, forKey: displayOptionsKey)
+        }
     }
 
     /// Llamar después de que la app esté completamente inicializada

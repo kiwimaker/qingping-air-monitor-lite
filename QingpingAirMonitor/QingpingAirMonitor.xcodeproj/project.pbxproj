@@ -19,12 +19,14 @@
 		C147C529464994D263A86B19 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398CC5C8FD9F3B95378297DE /* AppState.swift */; };
 		C49AB844B1C99A2ABA54DDEC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A70D71D340B8AFE8779A467 /* Assets.xcassets */; };
 		FB9A00A7B9E9CCA0CD5A75E9 /* AirQualityData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */; };
+		D8E7A1234567890ABCDEF123 /* MenuBarDisplayOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8E7A1234567890ABCDEF124 /* MenuBarDisplayOptions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		07DA759886AC406271640481 /* TokenResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenResponse.swift; sourceTree = "<group>"; };
 		1568863FAEC2D763381EB7FC /* QingpingAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QingpingAPIService.swift; sourceTree = "<group>"; };
 		17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirQualityData.swift; sourceTree = "<group>"; };
+		D8E7A1234567890ABCDEF124 /* MenuBarDisplayOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarDisplayOptions.swift; sourceTree = "<group>"; };
 		398CC5C8FD9F3B95378297DE /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		41545D30C46B6F78303F2054 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		4336D6D7406D39586FD20363 /* QingpingAirMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QingpingAirMonitor.entitlements; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 			children = (
 				17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */,
 				6CD972AD7C1555D18D468A5B /* Device.swift */,
+				D8E7A1234567890ABCDEF124 /* MenuBarDisplayOptions.swift */,
 				07DA759886AC406271640481 /* TokenResponse.swift */,
 			);
 			path = Models;
@@ -199,6 +202,7 @@
 				6C3BC65703830D0C6D7ECCF6 /* AuthenticationService.swift in Sources */,
 				5C2A3A4774B6BEDC19371664 /* Device.swift in Sources */,
 				563BC32863A71D89AD7A62AB /* KeychainService.swift in Sources */,
+				D8E7A1234567890ABCDEF123 /* MenuBarDisplayOptions.swift in Sources */,
 				53621CBFA767BCCE77EE1334 /* MenuBarView.swift in Sources */,
 				534FAEEC49F2BCFDBF1111EB /* QingpingAPIService.swift in Sources */,
 				0DA82F83FF2D920DA74EF5F0 /* QingpingAirMonitorApp.swift in Sources */,

@@ -19,6 +19,11 @@ struct SettingsView: View {
                     Label("API", systemImage: "key")
                 }
 
+            displayTab
+                .tabItem {
+                    Label("Pantalla", systemImage: "menubar.rectangle")
+                }
+
             generalTab
                 .tabItem {
                     Label("General", systemImage: "gear")
@@ -29,7 +34,7 @@ struct SettingsView: View {
                     Label("Acerca de", systemImage: "info.circle")
                 }
         }
-        .frame(width: 450, height: 280)
+        .frame(width: 450, height: 320)
         .onAppear(perform: loadExistingSettings)
         .alert(alertTitle, isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }
@@ -96,6 +101,73 @@ struct SettingsView: View {
             }
         }
         .padding()
+    }
+
+    // MARK: - Display Tab
+
+    private var displayTab: some View {
+        Form {
+            Section {
+                Text("Mostrar en la barra de menú")
+                    .font(.headline)
+
+                Text("Selecciona qué valores se mostrarán junto al icono")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Toggle("Temperatura", isOn: $appState.menuBarDisplayOptions.showTemperature)
+                Toggle("Humedad", isOn: $appState.menuBarDisplayOptions.showHumidity)
+                Toggle("CO₂", isOn: $appState.menuBarDisplayOptions.showCO2)
+                Toggle("PM2.5", isOn: $appState.menuBarDisplayOptions.showPM25)
+                Toggle("PM10", isOn: $appState.menuBarDisplayOptions.showPM10)
+            }
+
+            Section {
+                HStack {
+                    Text("Vista previa:")
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    HStack(spacing: 4) {
+                        Image(systemName: "aqi.medium")
+                        if let data = appState.currentData {
+                            Text(previewText(data: data))
+                                .font(.system(.body, design: .rounded))
+                        } else {
+                            Text("—")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(4)
+                }
+            }
+        }
+        .padding()
+    }
+
+    private func previewText(data: AirQualityData) -> String {
+        let options = appState.menuBarDisplayOptions
+        var parts: [String] = []
+
+        if options.showTemperature, let temp = data.temperature {
+            parts.append(String(format: "%.0f°", temp))
+        }
+        if options.showHumidity, let humidity = data.humidity {
+            parts.append(String(format: "%.0f%%", humidity))
+        }
+        if options.showCO2, let co2 = data.co2 {
+            parts.append("\(co2)ppm")
+        }
+        if options.showPM25, let pm25 = data.pm25 {
+            parts.append("PM\(pm25)")
+        }
+        if options.showPM10, let pm10 = data.pm10 {
+            parts.append("PM10:\(pm10)")
+        }
+
+        return parts.isEmpty ? "—" : parts.joined(separator: " ")
     }
 
     // MARK: - General Tab
