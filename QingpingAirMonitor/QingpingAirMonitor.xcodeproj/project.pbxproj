@@ -1,0 +1,411 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0DA82F83FF2D920DA74EF5F0 /* QingpingAirMonitorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F726E70DC9800EC7A3C8CBF5 /* QingpingAirMonitorApp.swift */; };
+		534FAEEC49F2BCFDBF1111EB /* QingpingAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1568863FAEC2D763381EB7FC /* QingpingAPIService.swift */; };
+		53621CBFA767BCCE77EE1334 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41545D30C46B6F78303F2054 /* MenuBarView.swift */; };
+		563BC32863A71D89AD7A62AB /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E9143854DFF409425153703 /* KeychainService.swift */; };
+		5C2A3A4774B6BEDC19371664 /* Device.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CD972AD7C1555D18D468A5B /* Device.swift */; };
+		6C3BC65703830D0C6D7ECCF6 /* AuthenticationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC80001BE9B5047F6CC1411A /* AuthenticationService.swift */; };
+		6EBCB427CFA8D69F952825C7 /* TokenResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DA759886AC406271640481 /* TokenResponse.swift */; };
+		A6FBEF2935EF195BB51DB503 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9144D4BC94C290124031117D /* SettingsView.swift */; };
+		AC32FFAD42062C2931B89402 /* SensorRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E2C29D591872B0303A94D6E /* SensorRowView.swift */; };
+		C147C529464994D263A86B19 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398CC5C8FD9F3B95378297DE /* AppState.swift */; };
+		C49AB844B1C99A2ABA54DDEC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A70D71D340B8AFE8779A467 /* Assets.xcassets */; };
+		FB9A00A7B9E9CCA0CD5A75E9 /* AirQualityData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		07DA759886AC406271640481 /* TokenResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenResponse.swift; sourceTree = "<group>"; };
+		1568863FAEC2D763381EB7FC /* QingpingAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QingpingAPIService.swift; sourceTree = "<group>"; };
+		17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirQualityData.swift; sourceTree = "<group>"; };
+		398CC5C8FD9F3B95378297DE /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		41545D30C46B6F78303F2054 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		4336D6D7406D39586FD20363 /* QingpingAirMonitor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = QingpingAirMonitor.entitlements; sourceTree = "<group>"; };
+		4A70D71D340B8AFE8779A467 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5F3FFD8B87AA636D9BB35F5B /* Qingping Air Monitor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Qingping Air Monitor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6CD972AD7C1555D18D468A5B /* Device.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Device.swift; sourceTree = "<group>"; };
+		9144D4BC94C290124031117D /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9E2C29D591872B0303A94D6E /* SensorRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensorRowView.swift; sourceTree = "<group>"; };
+		9E9143854DFF409425153703 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		E58A9F1F48EA68CB85B4858B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		EC80001BE9B5047F6CC1411A /* AuthenticationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationService.swift; sourceTree = "<group>"; };
+		F726E70DC9800EC7A3C8CBF5 /* QingpingAirMonitorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QingpingAirMonitorApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		11FFCA32D36CD7447F971E03 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				41545D30C46B6F78303F2054 /* MenuBarView.swift */,
+				9E2C29D591872B0303A94D6E /* SensorRowView.swift */,
+				9144D4BC94C290124031117D /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		3B3D36543BBB2E7C73917EA8 /* QingpingAirMonitor */ = {
+			isa = PBXGroup;
+			children = (
+				4A70D71D340B8AFE8779A467 /* Assets.xcassets */,
+				9E8F1399FFC000652FD7E166 /* App */,
+				57E1309B0B74E1058A55F373 /* Managers */,
+				5F5BC0202C087F33EEAE1D05 /* Models */,
+				5A1C1DF9BD4E665F716F0D89 /* Services */,
+				3F5FC5D259A2AF765DA4D64F /* Utilities */,
+				11FFCA32D36CD7447F971E03 /* Views */,
+			);
+			path = QingpingAirMonitor;
+			sourceTree = "<group>";
+		};
+		3F5FC5D259A2AF765DA4D64F /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		57E1309B0B74E1058A55F373 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				398CC5C8FD9F3B95378297DE /* AppState.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		5A1C1DF9BD4E665F716F0D89 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				EC80001BE9B5047F6CC1411A /* AuthenticationService.swift */,
+				9E9143854DFF409425153703 /* KeychainService.swift */,
+				1568863FAEC2D763381EB7FC /* QingpingAPIService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		5F5BC0202C087F33EEAE1D05 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				17DC33E778DC7C832EC4DAB5 /* AirQualityData.swift */,
+				6CD972AD7C1555D18D468A5B /* Device.swift */,
+				07DA759886AC406271640481 /* TokenResponse.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		81E0A19E8784A093F967C02D = {
+			isa = PBXGroup;
+			children = (
+				3B3D36543BBB2E7C73917EA8 /* QingpingAirMonitor */,
+				9A97F9908866878400AB1BD5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9A97F9908866878400AB1BD5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5F3FFD8B87AA636D9BB35F5B /* Qingping Air Monitor.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9E8F1399FFC000652FD7E166 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				E58A9F1F48EA68CB85B4858B /* Info.plist */,
+				4336D6D7406D39586FD20363 /* QingpingAirMonitor.entitlements */,
+				F726E70DC9800EC7A3C8CBF5 /* QingpingAirMonitorApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8BB7C648F9E393D7A56132CC /* QingpingAirMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9CA3D0EF816066C5F583AB57 /* Build configuration list for PBXNativeTarget "QingpingAirMonitor" */;
+			buildPhases = (
+				D9096849D1329BF973B17C3B /* Sources */,
+				6EED2A0202D076E39D5BF785 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QingpingAirMonitor;
+			packageProductDependencies = (
+			);
+			productName = QingpingAirMonitor;
+			productReference = 5F3FFD8B87AA636D9BB35F5B /* Qingping Air Monitor.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F2A5D3ED9B230DDF0EDA1C8C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					8BB7C648F9E393D7A56132CC = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = A0F79E58F7B9ED354BCBD751 /* Build configuration list for PBXProject "QingpingAirMonitor" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 81E0A19E8784A093F967C02D;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8BB7C648F9E393D7A56132CC /* QingpingAirMonitor */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6EED2A0202D076E39D5BF785 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C49AB844B1C99A2ABA54DDEC /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D9096849D1329BF973B17C3B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB9A00A7B9E9CCA0CD5A75E9 /* AirQualityData.swift in Sources */,
+				C147C529464994D263A86B19 /* AppState.swift in Sources */,
+				6C3BC65703830D0C6D7ECCF6 /* AuthenticationService.swift in Sources */,
+				5C2A3A4774B6BEDC19371664 /* Device.swift in Sources */,
+				563BC32863A71D89AD7A62AB /* KeychainService.swift in Sources */,
+				53621CBFA767BCCE77EE1334 /* MenuBarView.swift in Sources */,
+				534FAEEC49F2BCFDBF1111EB /* QingpingAPIService.swift in Sources */,
+				0DA82F83FF2D920DA74EF5F0 /* QingpingAirMonitorApp.swift in Sources */,
+				AC32FFAD42062C2931B89402 /* SensorRowView.swift in Sources */,
+				A6FBEF2935EF195BB51DB503 /* SettingsView.swift in Sources */,
+				6EBCB427CFA8D69F952825C7 /* TokenResponse.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2DAF8DBF9FD6415C71C6B8C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = QingpingAirMonitor/App/QingpingAirMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = QingpingAirMonitor/App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.air-monitor";
+				PRODUCT_NAME = "Qingping Air Monitor";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9C3C79D44959565222215DE2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = QingpingAirMonitor/App/QingpingAirMonitor.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = QingpingAirMonitor/App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.qingping.air-monitor";
+				PRODUCT_NAME = "Qingping Air Monitor";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		BEA72C2BB89B65FC7D893426 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		FBFF4D8CB4F090AE49E20959 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9CA3D0EF816066C5F583AB57 /* Build configuration list for PBXNativeTarget "QingpingAirMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9C3C79D44959565222215DE2 /* Debug */,
+				2DAF8DBF9FD6415C71C6B8C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A0F79E58F7B9ED354BCBD751 /* Build configuration list for PBXProject "QingpingAirMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BEA72C2BB89B65FC7D893426 /* Debug */,
+				FBFF4D8CB4F090AE49E20959 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F2A5D3ED9B230DDF0EDA1C8C /* Project object */;
+}
