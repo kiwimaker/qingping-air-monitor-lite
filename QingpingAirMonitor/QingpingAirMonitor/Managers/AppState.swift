@@ -496,6 +496,9 @@ final class AppState: ObservableObject {
 
     /// Sincronización forzada de los últimos N días (ignora lastTimestamp)
     @Published var isSyncingHistory = false
+    @Published var syncProgress: HistorySyncProgress?
+    @Published var lastSyncError: String?
+    @Published var lastSyncSummary: String?
 
     func forceSyncHistory(days: Int) async {
         guard let service = historyService,
@@ -503,7 +506,13 @@ final class AppState: ObservableObject {
               let deviceMac = selectedDeviceMac else { return }
 
         isSyncingHistory = true
-        defer { isSyncingHistory = false }
+        syncProgress = HistorySyncProgress(phase: .connecting, loaded: 0, total: 0)
+        lastSyncError = nil
+        lastSyncSummary = nil
+        defer {
+            isSyncingHistory = false
+            syncProgress = nil
+        }
 
         let endDate = Date()
         let startDate = Calendar.current.date(byAdding: .day, value: -days, to: endDate)!
@@ -516,6 +525,20 @@ final class AppState: ObservableObject {
                 mac: deviceMac,
                 startTime: startTime,
                 endTime: endTime
+            ) { [weak self] loaded, total in
+                Task { @MainActor in
+                    self?.syncProgress = HistorySyncProgress(
+                        phase: .fetching,
+                        loaded: loaded,
+                        total: total
+                    )
+                }
+            }
+
+            syncProgress = HistorySyncProgress(
+                phase: .saving,
+                loaded: 0,
+                total: historicalData.count
             )
 
             let readings: [SensorReading] = historicalData.map { item in
@@ -534,8 +557,37 @@ final class AppState: ObservableObject {
             if !readings.isEmpty {
                 try await service.insertReadingsIgnoringDuplicates(readings)
             }
+
+            lastSyncSummary = "\(readings.count) lecturas sincronizadas"
         } catch {
-            // Error handled silently
+            lastSyncError = error.localizedDescription
         }
+    }
+}
+
+// MARK: - Progreso de sincronización
+
+struct HistorySyncProgress: Equatable {
+    enum Phase: Equatable {
+        case connecting
+        case fetching
+        case saving
+
+        var label: String {
+            switch self {
+            case .connecting: return "Conectando…"
+            case .fetching: return "Descargando"
+            case .saving: return "Guardando"
+            }
+        }
+    }
+
+    let phase: Phase
+    let loaded: Int
+    let total: Int
+
+    var fraction: Double? {
+        guard total > 0 else { return nil }
+        return min(1, Double(loaded) / Double(total))
     }
 }

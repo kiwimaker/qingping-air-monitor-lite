@@ -88,7 +88,12 @@ actor QingpingAPIService {
         return devicesResponse.devices
     }
 
-    func fetchHistoricalData(mac: String, startTime: Int, endTime: Int) async throws -> [HistoricalReading] {
+    func fetchHistoricalData(
+        mac: String,
+        startTime: Int,
+        endTime: Int,
+        progress: (@Sendable (_ loaded: Int, _ total: Int) -> Void)? = nil
+    ) async throws -> [HistoricalReading] {
         var allReadings: [HistoricalReading] = []
         var offset = 0
         let limit = 200
@@ -141,6 +146,8 @@ actor QingpingAPIService {
             if historyResponse.data.isEmpty { break }
 
             allReadings.append(contentsOf: historyResponse.data)
+
+            progress?(allReadings.count, totalReported)
 
             if allReadings.count >= totalReported { break }
 

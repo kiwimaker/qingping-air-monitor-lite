@@ -18,6 +18,15 @@ struct HistoryWindowView: View {
                 .padding()
                 .background(Color(NSColor.windowBackgroundColor))
 
+            // Banner de progreso o resultado de la sincronización
+            if appState.isSyncingHistory || appState.syncProgress != nil {
+                syncBanner
+            } else if let error = appState.lastSyncError {
+                syncErrorBanner(error)
+            } else if let summary = appState.lastSyncSummary {
+                syncSummaryBanner(summary)
+            }
+
             Divider()
 
             // Content
@@ -35,6 +44,86 @@ struct HistoryWindowView: View {
         .onAppear { loadData() }
         .onChange(of: selectedRange) { loadData() }
         .onChange(of: appState.selectedDeviceMac) { loadData() }
+        .onChange(of: appState.isSyncingHistory) { _, syncing in
+            if !syncing { loadData() }
+        }
+    }
+
+    private var syncBanner: some View {
+        let progress = appState.syncProgress
+        return HStack(spacing: 10) {
+            if let fraction = progress?.fraction {
+                ProgressView(value: fraction)
+                    .progressViewStyle(.linear)
+                    .frame(maxWidth: 220)
+            } else {
+                ProgressView()
+                    .progressViewStyle(.linear)
+                    .frame(maxWidth: 220)
+            }
+
+            Text(syncStatusText)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .monospacedDigit()
+
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color.accentColor.opacity(0.08))
+    }
+
+    private var syncStatusText: String {
+        guard let progress = appState.syncProgress else {
+            return "Sincronizando…"
+        }
+        switch progress.phase {
+        case .connecting:
+            return "Conectando con la nube…"
+        case .fetching:
+            if progress.total > 0 {
+                return "Descargando \(progress.loaded) / \(progress.total) lecturas…"
+            }
+            return "Descargando lecturas…"
+        case .saving:
+            return "Guardando \(progress.total) lecturas en el histórico…"
+        }
+    }
+
+    private func syncErrorBanner(_ message: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+            Text("Sincronización fallida: \(message)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+            Spacer()
+            Button("Cerrar") { appState.lastSyncError = nil }
+                .buttonStyle(.borderless)
+                .font(.caption)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color.orange.opacity(0.1))
+    }
+
+    private func syncSummaryBanner(_ summary: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundColor(.green)
+            Text(summary)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            Spacer()
+            Button("Ocultar") { appState.lastSyncSummary = nil }
+                .buttonStyle(.borderless)
+                .font(.caption)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 6)
+        .background(Color.green.opacity(0.08))
     }
 
     // MARK: - Subviews
