@@ -88,6 +88,13 @@ struct HistoryWindowView: View {
             return "Descargando lecturas…"
         case .saving:
             return "Guardando \(progress.total) lecturas en el histórico…"
+        case .scanningGaps:
+            return "Analizando huecos en el histórico…"
+        case .fillingGap(let index, let count):
+            if progress.total > 0 {
+                return "Hueco \(index)/\(count) · \(progress.loaded)/\(progress.total) lecturas"
+            }
+            return "Rellenando hueco \(index) de \(count)…"
         }
     }
 
@@ -152,11 +159,19 @@ struct HistoryWindowView: View {
             .labelsHidden()
             .frame(width: 180)
 
-            // Botón sincronizar desde API
-            Button {
-                Task {
-                    await appState.forceSyncHistory(days: 30)
-                    loadData()
+            // Menú de sincronización desde la nube
+            Menu {
+                Button("Sincronizar últimos 30 días") {
+                    Task {
+                        await appState.forceSyncHistory(days: 30)
+                        loadData()
+                    }
+                }
+                Button("Rellenar huecos del histórico") {
+                    Task {
+                        await appState.syncHistoryGaps()
+                        loadData()
+                    }
                 }
             } label: {
                 if appState.isSyncingHistory {
@@ -167,8 +182,10 @@ struct HistoryWindowView: View {
                     Image(systemName: "arrow.triangle.2.circlepath")
                 }
             }
-            .buttonStyle(.borderless)
-            .help("Sincronizar últimos 30 días desde la nube")
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Sincronización con la nube")
             .disabled(appState.isSyncingHistory)
 
             // Botón exportar

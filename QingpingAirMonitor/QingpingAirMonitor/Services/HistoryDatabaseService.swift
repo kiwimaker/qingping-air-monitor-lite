@@ -227,6 +227,31 @@ actor HistoryDatabaseService {
         return readings
     }
 
+    /// Devuelve únicamente los timestamps (en segundos) ordenados ascendente.
+    /// Mucho más ligero que `fetchAllReadings` para detectar huecos.
+    func fetchTimestamps(deviceMac: String) throws -> [Int64] {
+        let sql = """
+            SELECT timestamp FROM sensor_readings
+            WHERE device_mac = ?
+            ORDER BY timestamp ASC
+        """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw DatabaseError.prepareFailed
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        sqlite3_bind_text(stmt, 1, deviceMac, -1, SQLITE_TRANSIENT)
+
+        var result: [Int64] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            result.append(sqlite3_column_int64(stmt, 0))
+        }
+        return result
+    }
+
     func fetchAllReadings(deviceMac: String) throws -> [SensorReading] {
         let sql = """
             SELECT id, device_mac, timestamp, co2, pm25, pm10, temperature, humidity, battery

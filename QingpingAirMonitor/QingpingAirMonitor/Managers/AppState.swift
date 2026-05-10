@@ -564,6 +564,118 @@ final class AppState: ObservableObject {
             lastSyncError = error.localizedDescription
         }
     }
+
+    // MARK: - Sincronización de huecos
+
+    /// Detecta tramos sin datos en el histórico local y solicita a la API
+    /// los rangos faltantes. Útil cuando el dispositivo estuvo offline durante
+    /// días/semanas y necesitamos recuperar lo que la nube todavía conserva.
+    /// Solo considera huecos > `gapThreshold` para evitar consultas inútiles
+    /// por outages cortos (cadencia normal del dispositivo es 1–15 min).
+    func syncHistoryGaps(gapThreshold: TimeInterval = 6 * 3600) async {
+        guard let service = historyService,
+              let apiService = apiService,
+              let deviceMac = selectedDeviceMac else { return }
+
+        isSyncingHistory = true
+        syncProgress = HistorySyncProgress(phase: .scanningGaps, loaded: 0, total: 0)
+        lastSyncError = nil
+        lastSyncSummary = nil
+        defer {
+            isSyncingHistory = false
+            syncProgress = nil
+        }
+
+        // 1. Detectar huecos
+        let timestamps: [Int64]
+        do {
+            timestamps = try await service.fetchTimestamps(deviceMac: deviceMac)
+        } catch {
+            lastSyncError = error.localizedDescription
+            return
+        }
+
+        guard timestamps.count >= 2 else {
+            lastSyncSummary = "No hay suficientes datos para detectar huecos"
+            return
+        }
+
+        var gaps: [(start: Date, end: Date)] = []
+        let thresholdSecs = Int64(gapThreshold)
+        for i in 1..<timestamps.count {
+            let delta = timestamps[i] - timestamps[i - 1]
+            if delta > thresholdSecs {
+                // Pedimos justo el interior del hueco para no duplicar
+                let start = Date(timeIntervalSince1970: TimeInterval(timestamps[i - 1] + 60))
+                let end = Date(timeIntervalSince1970: TimeInterval(timestamps[i] - 60))
+                gaps.append((start, end))
+            }
+        }
+
+        guard !gaps.isEmpty else {
+            lastSyncSummary = "No se han detectado huecos"
+            return
+        }
+
+        // 2. Rellenar cada hueco
+        var totalRecovered = 0
+        var failedGaps = 0
+
+        for (index, gap) in gaps.enumerated() {
+            syncProgress = HistorySyncProgress(
+                phase: .fillingGap(index: index + 1, count: gaps.count),
+                loaded: 0,
+                total: 0
+            )
+
+            let startTime = Int(gap.start.timeIntervalSince1970)
+            let endTime = Int(gap.end.timeIntervalSince1970)
+
+            do {
+                let historicalData = try await apiService.fetchHistoricalData(
+                    mac: deviceMac,
+                    startTime: startTime,
+                    endTime: endTime
+                ) { [weak self] loaded, total in
+                    Task { @MainActor in
+                        self?.syncProgress = HistorySyncProgress(
+                            phase: .fillingGap(index: index + 1, count: gaps.count),
+                            loaded: loaded,
+                            total: total
+                        )
+                    }
+                }
+
+                let readings: [SensorReading] = historicalData.map { item in
+                    SensorReading(
+                        deviceMac: deviceMac,
+                        timestamp: Date(timeIntervalSince1970: TimeInterval(item.timestamp.value)),
+                        co2: item.co2.map { Int($0.value) },
+                        pm25: item.pm25.map { Int($0.value) },
+                        pm10: item.pm10.map { Int($0.value) },
+                        temperature: item.temperature?.value,
+                        humidity: item.humidity?.value,
+                        battery: item.battery.map { Int($0.value) }
+                    )
+                }
+
+                if !readings.isEmpty {
+                    try await service.insertReadingsIgnoringDuplicates(readings)
+                    totalRecovered += readings.count
+                }
+            } catch {
+                failedGaps += 1
+                // Seguimos con el siguiente hueco; un fallo aislado no debe
+                // abortar toda la operación.
+            }
+        }
+
+        var summary = "\(gaps.count) huecos analizados · \(totalRecovered) lecturas recuperadas"
+        if failedGaps > 0 {
+            summary += " · \(failedGaps) sin respuesta del servidor"
+        }
+        lastSyncSummary = summary
+    }
 }
 
 // MARK: - Progreso de sincronización
@@ -573,12 +685,16 @@ struct HistorySyncProgress: Equatable {
         case connecting
         case fetching
         case saving
+        case scanningGaps
+        case fillingGap(index: Int, count: Int)
 
         var label: String {
             switch self {
             case .connecting: return "Conectando…"
             case .fetching: return "Descargando"
             case .saving: return "Guardando"
+            case .scanningGaps: return "Buscando huecos"
+            case .fillingGap: return "Rellenando hueco"
             }
         }
     }
