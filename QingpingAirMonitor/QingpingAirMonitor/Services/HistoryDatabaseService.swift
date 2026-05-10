@@ -227,6 +227,90 @@ actor HistoryDatabaseService {
         return readings
     }
 
+    /// Devuelve estadísticas agregadas por mes (zona horaria local).
+    /// Útil para una vista resumen sin cargar todas las lecturas.
+    func fetchMonthlyStats(deviceMac: String) throws -> [MonthlyStats] {
+        let sql = """
+            SELECT
+                strftime('%Y-%m', timestamp, 'unixepoch', 'localtime') AS ym,
+                COUNT(*) AS n,
+                MIN(temperature), AVG(temperature), MAX(temperature),
+                MIN(humidity), AVG(humidity), MAX(humidity),
+                MIN(co2), AVG(co2), MAX(co2),
+                AVG(pm25), MAX(pm25),
+                AVG(pm10), MAX(pm10)
+            FROM sensor_readings
+            WHERE device_mac = ?
+            GROUP BY ym
+            ORDER BY ym DESC
+        """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw DatabaseError.prepareFailed
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        sqlite3_bind_text(stmt, 1, deviceMac, -1, SQLITE_TRANSIENT)
+
+        var result: [MonthlyStats] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            guard let ymPtr = sqlite3_column_text(stmt, 0) else { continue }
+            let ym = String(cString: ymPtr)
+            let parts = ym.split(separator: "-")
+            guard parts.count == 2,
+                  let year = Int(parts[0]),
+                  let month = Int(parts[1]) else { continue }
+
+            let count = Int(sqlite3_column_int64(stmt, 1))
+
+            let tempMin = columnOptionalDouble(stmt, 2)
+            let tempAvg = columnOptionalDouble(stmt, 3)
+            let tempMax = columnOptionalDouble(stmt, 4)
+            let humMin = columnOptionalDouble(stmt, 5)
+            let humAvg = columnOptionalDouble(stmt, 6)
+            let humMax = columnOptionalDouble(stmt, 7)
+            let co2MinRaw = columnOptionalDouble(stmt, 8)
+            let co2AvgRaw = columnOptionalDouble(stmt, 9)
+            let co2MaxRaw = columnOptionalDouble(stmt, 10)
+            let pm25AvgRaw = columnOptionalDouble(stmt, 11)
+            let pm25MaxRaw = columnOptionalDouble(stmt, 12)
+            let pm10AvgRaw = columnOptionalDouble(stmt, 13)
+            let pm10MaxRaw = columnOptionalDouble(stmt, 14)
+
+            let co2Min: Int? = co2MinRaw.map { Int($0.rounded()) }
+            let co2Avg: Int? = co2AvgRaw.map { Int($0.rounded()) }
+            let co2Max: Int? = co2MaxRaw.map { Int($0.rounded()) }
+            let pm25Avg: Int? = pm25AvgRaw.map { Int($0.rounded()) }
+            let pm25Max: Int? = pm25MaxRaw.map { Int($0.rounded()) }
+            let pm10Avg: Int? = pm10AvgRaw.map { Int($0.rounded()) }
+            let pm10Max: Int? = pm10MaxRaw.map { Int($0.rounded()) }
+
+            let stats = MonthlyStats(
+                id: ym,
+                year: year,
+                month: month,
+                count: count,
+                tempMin: tempMin,
+                tempAvg: tempAvg,
+                tempMax: tempMax,
+                humMin: humMin,
+                humAvg: humAvg,
+                humMax: humMax,
+                co2Min: co2Min,
+                co2Avg: co2Avg,
+                co2Max: co2Max,
+                pm25Avg: pm25Avg,
+                pm25Max: pm25Max,
+                pm10Avg: pm10Avg,
+                pm10Max: pm10Max
+            )
+            result.append(stats)
+        }
+        return result
+    }
+
     /// Devuelve únicamente los timestamps (en segundos) ordenados ascendente.
     /// Mucho más ligero que `fetchAllReadings` para detectar huecos.
     func fetchTimestamps(deviceMac: String) throws -> [Int64] {

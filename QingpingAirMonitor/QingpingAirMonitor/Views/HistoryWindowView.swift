@@ -2,12 +2,25 @@ import SwiftUI
 import Charts
 import UniformTypeIdentifiers
 
+enum HistoryViewMode: String, CaseIterable, Identifiable {
+    case chart, stats
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .chart: return "Gráfica"
+        case .stats: return "Estadísticas"
+        }
+    }
+}
+
 struct HistoryWindowView: View {
     @EnvironmentObject var appState: AppState
 
+    @State private var viewMode: HistoryViewMode = .chart
     @State private var selectedMetric: SensorMetric = .co2
     @State private var selectedRange: TimeRange = .day
     @State private var readings: [SensorReading] = []
+    @State private var monthlyStats: [MonthlyStats] = []
     @State private var isLoading = false
     @State private var isExporting = false
 
@@ -34,14 +47,18 @@ struct HistoryWindowView: View {
                 historyDisabledView
             } else if isLoading {
                 loadingView
-            } else if readings.isEmpty {
-                emptyView
             } else {
-                chartContent
+                switch viewMode {
+                case .chart:
+                    if readings.isEmpty { emptyView } else { chartContent }
+                case .stats:
+                    if monthlyStats.isEmpty { emptyStatsView } else { statsContent }
+                }
             }
         }
-        .frame(minWidth: 700, minHeight: 500)
+        .frame(minWidth: 760, minHeight: 500)
         .onAppear { loadData() }
+        .onChange(of: viewMode) { loadData() }
         .onChange(of: selectedRange) { loadData() }
         .onChange(of: appState.selectedDeviceMac) { loadData() }
         .onChange(of: appState.isSyncingHistory) { _, syncing in
@@ -137,27 +154,43 @@ struct HistoryWindowView: View {
 
     private var toolbar: some View {
         HStack {
-            // Selector de métrica
-            Picker("Métrica", selection: $selectedMetric) {
-                ForEach(SensorMetric.allCases) { metric in
-                    Text(metric.label).tag(metric)
+            // Modo de vista (gráfica vs estadísticas)
+            Picker("Vista", selection: $viewMode) {
+                ForEach(HistoryViewMode.allCases) { mode in
+                    Text(mode.label).tag(mode)
                 }
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .frame(maxWidth: 350)
+            .frame(width: 200)
+
+            if viewMode == .chart {
+                Divider().frame(height: 18)
+
+                // Selector de métrica
+                Picker("Métrica", selection: $selectedMetric) {
+                    ForEach(SensorMetric.allCases) { metric in
+                        Text(metric.label).tag(metric)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(maxWidth: 320)
+            }
 
             Spacer()
 
-            // Selector de rango temporal
-            Picker("Rango", selection: $selectedRange) {
-                ForEach(TimeRange.allCases) { range in
-                    Text(range.rawValue).tag(range)
+            if viewMode == .chart {
+                // Selector de rango temporal
+                Picker("Rango", selection: $selectedRange) {
+                    ForEach(TimeRange.allCases) { range in
+                        Text(range.rawValue).tag(range)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 180)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 180)
 
             // Menú de sincronización desde la nube
             Menu {
@@ -202,7 +235,7 @@ struct HistoryWindowView: View {
             }
             .buttonStyle(.borderless)
             .help("Exportar datos visibles a CSV")
-            .disabled(readings.isEmpty || isExporting)
+            .disabled(viewMode != .chart || readings.isEmpty || isExporting)
         }
     }
 
@@ -235,6 +268,69 @@ struct HistoryWindowView: View {
             systemImage: "chart.line.uptrend.xyaxis",
             description: Text("No hay datos registrados para \(selectedRange.label)")
         )
+    }
+
+    private var emptyStatsView: some View {
+        ContentUnavailableView(
+            "Sin estadísticas",
+            systemImage: "tablecells",
+            description: Text("Aún no hay suficientes lecturas almacenadas para calcular estadísticas mensuales.")
+        )
+    }
+
+    private var statsContent: some View {
+        VStack(spacing: 0) {
+            // Cabecera con leyenda
+            HStack {
+                Text("Resumen mensual · valores: mín · media · máx (PM: media · máx)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text("\(monthlyStats.count) meses")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+
+            Table(monthlyStats) {
+                TableColumn("Mes") { stat in
+                    Text(stat.monthLabel).fontWeight(.medium)
+                }
+                .width(min: 130, ideal: 150)
+
+                TableColumn("Lecturas") { stat in
+                    Text("\(stat.count)").monospacedDigit()
+                }
+                .width(min: 70, ideal: 80)
+
+                TableColumn("Temp (°C)") { stat in
+                    Text(stat.temperatureSummary).monospacedDigit()
+                }
+                .width(min: 130, ideal: 150)
+
+                TableColumn("Hum (%)") { stat in
+                    Text(stat.humiditySummary).monospacedDigit()
+                }
+                .width(min: 110, ideal: 130)
+
+                TableColumn("CO₂ (ppm)") { stat in
+                    Text(stat.co2Summary).monospacedDigit()
+                }
+                .width(min: 130, ideal: 150)
+
+                TableColumn("PM2.5 (μg/m³)") { stat in
+                    Text(stat.pm25Summary).monospacedDigit()
+                }
+                .width(min: 100, ideal: 110)
+
+                TableColumn("PM10 (μg/m³)") { stat in
+                    Text(stat.pm10Summary).monospacedDigit()
+                }
+                .width(min: 100, ideal: 110)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private var chartContent: some View {
@@ -278,13 +374,19 @@ struct HistoryWindowView: View {
     private func loadData() {
         guard appState.isHistoryEnabled else {
             readings = []
+            monthlyStats = []
             return
         }
 
         isLoading = true
 
         Task {
-            readings = await appState.fetchHistoryReadings(for: selectedRange)
+            switch viewMode {
+            case .chart:
+                readings = await appState.fetchHistoryReadings(for: selectedRange)
+            case .stats:
+                monthlyStats = await appState.fetchMonthlyStats()
+            }
             isLoading = false
         }
     }

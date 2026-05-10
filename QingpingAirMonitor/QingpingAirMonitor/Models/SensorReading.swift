@@ -200,6 +200,64 @@ enum TimeRange: String, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Estadísticas mensuales
+
+struct MonthlyStats: Identifiable, Equatable {
+    let id: String       // "2026-04"
+    let year: Int
+    let month: Int
+    let count: Int
+
+    let tempMin: Double?
+    let tempAvg: Double?
+    let tempMax: Double?
+
+    let humMin: Double?
+    let humAvg: Double?
+    let humMax: Double?
+
+    let co2Min: Int?
+    let co2Avg: Int?
+    let co2Max: Int?
+
+    let pm25Avg: Int?
+    let pm25Max: Int?
+
+    let pm10Avg: Int?
+    let pm10Max: Int?
+
+    var monthLabel: String {
+        let comps = DateComponents(year: year, month: month, day: 1)
+        guard let date = Calendar.current.date(from: comps) else { return id }
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date).capitalized
+    }
+
+    var temperatureSummary: String { tripleSummary(min: tempMin, avg: tempAvg, max: tempMax, decimals: 1) }
+    var humiditySummary: String { tripleSummary(min: humMin, avg: humAvg, max: humMax, decimals: 0) }
+    var co2Summary: String { intDoubleSummary(min: co2Min, avg: co2Avg, max: co2Max) }
+    var pm25Summary: String { pairSummary(avg: pm25Avg, max: pm25Max) }
+    var pm10Summary: String { pairSummary(avg: pm10Avg, max: pm10Max) }
+
+    private func tripleSummary(min: Double?, avg: Double?, max: Double?, decimals: Int) -> String {
+        guard let min, let avg, let max else { return "—" }
+        let fmt = "%.\(decimals)f"
+        return "\(String(format: fmt, min)) · \(String(format: fmt, avg)) · \(String(format: fmt, max))"
+    }
+
+    private func intDoubleSummary(min: Int?, avg: Int?, max: Int?) -> String {
+        guard let min, let avg, let max else { return "—" }
+        return "\(min) · \(avg) · \(max)"
+    }
+
+    private func pairSummary(avg: Int?, max: Int?) -> String {
+        guard let avg, let max else { return "—" }
+        return "\(avg) · \(max)"
+    }
+}
+
 // MARK: - Retención de histórico
 
 enum HistoryRetention: String, CaseIterable, Identifiable {

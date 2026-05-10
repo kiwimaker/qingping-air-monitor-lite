@@ -423,6 +423,18 @@ final class AppState: ObservableObject {
         }
     }
 
+    func fetchMonthlyStats() async -> [MonthlyStats] {
+        guard let service = historyService,
+              let deviceMac = selectedDeviceMac else { return [] }
+
+        do {
+            return try await service.fetchMonthlyStats(deviceMac: deviceMac)
+        } catch {
+            print("Error obteniendo estadísticas mensuales: \(error.localizedDescription)")
+            return []
+        }
+    }
+
     func fetchHistoryReadings(for range: TimeRange) async -> [SensorReading] {
         guard let service = historyService,
               let deviceMac = selectedDeviceMac else { return [] }
