@@ -428,10 +428,11 @@ final class AppState: ObservableObject {
               let deviceMac = selectedDeviceMac else { return [] }
 
         do {
-            return try await service.fetchReadings(
+            return try await service.fetchAggregatedReadings(
                 deviceMac: deviceMac,
                 from: range.startDate,
-                to: Date()
+                to: Date(),
+                bucketSeconds: range.aggregationBucketSeconds
             )
         } catch {
             print("Error obteniendo lecturas: \(error.localizedDescription)")

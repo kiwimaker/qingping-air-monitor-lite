@@ -154,6 +154,79 @@ actor HistoryDatabaseService {
         return readings
     }
 
+    /// Fetch agregado: agrupa lecturas en buckets de `bucketSeconds` y promedia
+    /// los valores. Reduce drásticamente el número de puntos para rangos largos.
+    /// Si `bucketSeconds <= 60`, hace fallback a `fetchReadings`.
+    func fetchAggregatedReadings(
+        deviceMac: String,
+        from startDate: Date,
+        to endDate: Date,
+        bucketSeconds: Int
+    ) throws -> [SensorReading] {
+        guard bucketSeconds > 60 else {
+            return try fetchReadings(deviceMac: deviceMac, from: startDate, to: endDate)
+        }
+
+        let sql = """
+            SELECT
+                (timestamp / ?) * ? AS bucket,
+                AVG(co2) AS co2,
+                AVG(pm25) AS pm25,
+                AVG(pm10) AS pm10,
+                AVG(temperature) AS temperature,
+                AVG(humidity) AS humidity,
+                AVG(battery) AS battery
+            FROM sensor_readings
+            WHERE device_mac = ? AND timestamp BETWEEN ? AND ?
+            GROUP BY bucket
+            ORDER BY bucket ASC
+        """
+
+        var stmt: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &stmt, nil) == SQLITE_OK else {
+            throw DatabaseError.prepareFailed
+        }
+        defer { sqlite3_finalize(stmt) }
+
+        let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
+        sqlite3_bind_int64(stmt, 1, Int64(bucketSeconds))
+        sqlite3_bind_int64(stmt, 2, Int64(bucketSeconds))
+        sqlite3_bind_text(stmt, 3, deviceMac, -1, SQLITE_TRANSIENT)
+        sqlite3_bind_int64(stmt, 4, Int64(startDate.timeIntervalSince1970))
+        sqlite3_bind_int64(stmt, 5, Int64(endDate.timeIntervalSince1970))
+
+        let halfBucket = Int64(bucketSeconds) / 2
+        var readings: [SensorReading] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            let bucketStart = sqlite3_column_int64(stmt, 0)
+            // Centrar timestamp en mitad del bucket → líneas alineadas con la ventana real
+            let centerTs = TimeInterval(bucketStart + halfBucket)
+
+            let co2 = columnOptionalDouble(stmt, 1).map { Int($0.rounded()) }
+            let pm25 = columnOptionalDouble(stmt, 2).map { Int($0.rounded()) }
+            let pm10 = columnOptionalDouble(stmt, 3).map { Int($0.rounded()) }
+            let temperature = columnOptionalDouble(stmt, 4)
+            let humidity = columnOptionalDouble(stmt, 5)
+            let battery = columnOptionalDouble(stmt, 6).map { Int($0.rounded()) }
+
+            // id = bucketStart para identidad estable (suficiente para Identifiable)
+            let reading = SensorReading(
+                id: bucketStart,
+                deviceMac: deviceMac,
+                timestamp: Date(timeIntervalSince1970: centerTs),
+                co2: co2,
+                pm25: pm25,
+                pm10: pm10,
+                temperature: temperature,
+                humidity: humidity,
+                battery: battery
+            )
+            readings.append(reading)
+        }
+        return readings
+    }
+
     func fetchAllReadings(deviceMac: String) throws -> [SensorReading] {
         let sql = """
             SELECT id, device_mac, timestamp, co2, pm25, pm10, temperature, humidity, battery

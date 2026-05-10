@@ -182,6 +182,22 @@ enum TimeRange: String, CaseIterable, Identifiable {
         case .year: return calendar.date(byAdding: .year, value: -1, to: Date())!
         }
     }
+
+    /// Tamaño de bucket (en segundos) para agregar lecturas al consultar el
+    /// histórico. Mantiene la gráfica fluida en rangos largos sin perder forma.
+    /// Aprox. puntos por rango:
+    ///   - 24h crudo (~1 min): ~1440
+    ///   - 7d / 10 min: ~1008
+    ///   - 30d / 1 h: ~720
+    ///   - 1a / 6 h: ~1460
+    var aggregationBucketSeconds: Int {
+        switch self {
+        case .day: return 60          // sin agregación real
+        case .week: return 10 * 60    // 10 min
+        case .month: return 60 * 60   // 1 h
+        case .year: return 6 * 3600   // 6 h
+        }
+    }
 }
 
 // MARK: - Retención de histórico
